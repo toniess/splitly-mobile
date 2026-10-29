@@ -69,7 +69,13 @@ Map<String, int> _split(AppLocalizations l, int amountCents, SplitType type, Lis
         result[participants[i].userId] = share;
         given += share;
       }
-      _spreadRemainder(result, amountCents - given);
+      // Как на сервере: вес 0 — «не платит», копейка остатка ему не положена
+      final paying = {
+        for (var i = 0; i < participants.length; i++)
+          if (weights[i] > 0) participants[i].userId: result[participants[i].userId]!,
+      };
+      _spreadRemainder(paying, amountCents - given);
+      result.addAll(paying);
       return result;
   }
 }

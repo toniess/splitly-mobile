@@ -75,6 +75,32 @@ void main() {
     expect(e.shares.map((s) => cents(s.amount)).reduce((a, b) => a + b), 10000);
   });
 
+  test('SHARES: участник с весом 0 не получает копейку остатка', () async {
+    final e = await api.createExpense(
+      'g',
+      expense('100.00', SplitType.shares, const [
+        Participant(_a, '0'),
+        Participant(_b, '1'),
+        Participant(_c, '1'),
+      ]),
+      idempotencyKey: 'k1',
+    );
+    expect(e.shares.map((s) => s.amount), ['0.00', '50.00', '50.00']);
+  });
+
+  test('SHARES 0:1:2 — копейка остатка первому платящему, а не участнику с весом 0', () async {
+    final e = await api.createExpense(
+      'g',
+      expense('100.00', SplitType.shares, const [
+        Participant(_a, '0'),
+        Participant(_b, '1'),
+        Participant(_c, '2'),
+      ]),
+      idempotencyKey: 'k2',
+    );
+    expect(e.shares.map((s) => s.amount), ['0.00', '33.34', '66.66']);
+  });
+
   test('повторный Idempotency-Key не создаёт вторую трату', () async {
     final before = (await api.feed('g')).items.length;
     final body = expense('10.00', SplitType.equal, const [Participant(_a, null)]);
