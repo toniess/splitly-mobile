@@ -44,6 +44,18 @@ void main() {
       throw TestFailure('Не дождались: $finder\nНа экране: $onScreen');
     }
 
+    /// Довести элемент до экрана: на маленьком экране кнопка может оказаться ниже края,
+    /// а строка ленивого списка — ещё не построенной. Нажатие мимо экрана тихо промахивается.
+    Future<void> reveal(Finder finder) async {
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      if (finder.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(finder, 150, scrollable: find.byType(Scrollable).hitTestable().first);
+      }
+      await tester.ensureVisible(finder.first);
+      await tester.pumpAndSettle();
+    }
+
     /// «Назад» с верхнего экрана — после того как переходы доехали.
     Future<void> goBack() async {
       await tester.pumpAndSettle();
@@ -52,7 +64,7 @@ void main() {
     }
 
     Future<void> tapAndWait(Finder tap, Finder expected) async {
-      await tester.pumpAndSettle();
+      await reveal(tap);
       await tester.tap(tap);
       await waitFor(expected);
     }
@@ -74,6 +86,7 @@ void main() {
     await tester.pumpWidget(SplitlyApp(session: session));
     await waitFor(find.text(l.authToSignUp));
 
+    await reveal(find.text(l.authToSignUp));
     await tester.tap(find.text(l.authToSignUp));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, l.authName), anna.name);
@@ -114,6 +127,7 @@ void main() {
     // ---------- трата 300 поровну, платила Анна ----------
     await tester.tap(find.widgetWithText(FloatingActionButton, l.expensesAdd));
     await tester.pumpAndSettle();
+    await reveal(find.text(boris.name));
     expect(find.text(boris.name), findsOneWidget, reason: 'Борис есть среди участников траты');
     await tester.enterText(find.widgetWithText(TextFormField, l.formWhat), 'Ужин');
     await tester.enterText(find.widgetWithText(TextFormField, l.formAmount), '300');
@@ -139,6 +153,7 @@ void main() {
     await tapAndWait(groupTile, find.text(l.tabSettle));
     await tapAndWait(find.text(l.tabSettle), find.text(l.settlePaid));
     await tester.pumpAndSettle(); // вкладка ещё доезжает — иначе нажатие уйдёт мимо кнопки
+    await reveal(find.text(l.settlePaid));
     await tester.tap(find.text(l.settlePaid));
     await tester.pumpAndSettle();
     await tapAndWait(find.text(l.settleConfirmAction), find.text(l.settleEmpty));
