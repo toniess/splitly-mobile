@@ -114,16 +114,25 @@ flutter test
   сессия сохраняется.
 - `l10n_test.dart`: выбор языка, русские множественные числа, демо на английском.
 
-**Перед релизом** — сценарий против боевого бэкенда на эмуляторе или устройстве:
+**Сквозной сценарий** `integration_test/smoke_test.dart`: двое пользователей проходят всё
+через настоящий бэкенд — регистрация, группа, вступление по коду, трата, балансы, «Я отдал».
+Нужен запущенный эмулятор или устройство.
+
+В CI (задача `e2e`) бэкенд собирается из `splitly-backend` и поднимается с чистой базой
+через `.github/e2e/docker-compose.yml`, а сценарий идёт на Android-эмуляторе. Релиз по тегу
+ждёт этой задачи.
+
+Локально то же самое — рядом со своими контейнерами, на другом порту:
 
 ```bash
-flutter test integration_test/prod_smoke_test.dart -d <устройство>
+BACKEND_DIR=../splitly E2E_PORT=18080 POSTGRES_PASSWORD=e2e JWT_SECRET=$(openssl rand -base64 48) \
+  docker compose -p splitly-e2e -f .github/e2e/docker-compose.yml up -d --build --wait
+flutter test integration_test/smoke_test.dart -d <устройство> --dart-define=API_BASE=http://10.0.2.2:18080
+docker compose -p splitly-e2e -f .github/e2e/docker-compose.yml down
 ```
 
-Двое пользователей проходят всё через настоящий сервер: регистрация, группа, вступление
-по коду, трата, балансы, «Я отдал». Тест создаёт в проде пользователей
-`splitly-smoke-*@example.com` и группы `Smoke *`. Удалить их можно только вручную, поэтому
-в CI он не запускается: `flutter test` без аргументов берёт только `test/`.
+Без `API_BASE` сценарий пойдёт в прод и оставит там пользователей `splitly-smoke-*@example.com`,
+удалить которых можно только вручную.
 
 ## Релиз
 

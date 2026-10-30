@@ -7,14 +7,17 @@ import 'package:splitly/l10n/app_localizations.dart';
 import 'package:splitly/main.dart';
 import 'package:splitly/session.dart';
 
-/// Сценарий перед релизом против НАСТОЯЩЕГО бэкенда: создаёт в проде двух
-/// пользователей, группу, трату и перевод. Удалить их потом можно только
-/// вручную в базе — почты печатаются в лог.
-///   flutter test integration_test/prod_smoke_test.dart -d <устройство>
+/// Сквозной сценарий двумя пользователями через настоящий бэкенд: регистрация,
+/// группа, вступление по коду, трата, балансы, «Я отдал».
+///
+/// В CI идёт против бэкенда, поднятого из .github/e2e/docker-compose.yml. Можно и против
+/// прода (адрес по умолчанию), но тогда в боевой базе останутся пользователи
+/// splitly-smoke-*@example.com, а удалить их можно только вручную:
+///   flutter test integration_test/smoke_test.dart -d <устройство> [--dart-define=API_BASE=...]
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('прод: вход, группа, трата, балансы, расчёт двумя пользователями', (tester) async {
+  testWidgets('вход, группа, трата, балансы, расчёт двумя пользователями', (tester) async {
     tester.platformDispatcher.localesTestValue = const [Locale('ru')];
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
     final l = lookupAppLocalizations(const Locale('ru'));
