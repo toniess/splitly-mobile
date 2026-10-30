@@ -159,6 +159,7 @@ class _GroupScreenState extends State<GroupScreen> {
               members: _members,
               nameOf: _nameOf,
               onChanged: _changed,
+              reloadGroup: _load,
             ),
             _BalancesTab(key: ValueKey(('balances', _revision)), groupId: widget.groupId, meId: meId),
             _SettleTab(
@@ -184,12 +185,17 @@ class _ExpensesTab extends StatefulWidget {
   final String Function(String userId) nameOf;
   final VoidCallback onChanged;
 
+  /// Перечитать группу и участников: пока экран открыт, в группу могли вступить,
+  /// а форма траты предлагает только тех, кого экран уже знает.
+  final Future<void> Function() reloadGroup;
+
   const _ExpensesTab({
     required this.groupId,
     required this.meId,
     required this.members,
     required this.nameOf,
     required this.onChanged,
+    required this.reloadGroup,
   });
 
   @override
@@ -279,7 +285,7 @@ class _ExpensesTabState extends State<_ExpensesTab> with AutomaticKeepAliveClien
         label: Text(context.l10n.expensesAdd),
       ),
       body: RefreshIndicator(
-        onRefresh: () => _load(reset: true),
+        onRefresh: () => Future.wait([_load(reset: true), widget.reloadGroup()]),
         child: NotificationListener<ScrollNotification>(
           // Подгружаем следующую страницу заранее, за экран до конца списка.
           onNotification: (n) {
