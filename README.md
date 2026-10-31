@@ -125,7 +125,7 @@ flutter test
 Локально то же самое — рядом со своими контейнерами, на другом порту:
 
 ```bash
-BACKEND_DIR=../splitly E2E_PORT=18080 POSTGRES_PASSWORD=e2e JWT_SECRET=$(openssl rand -base64 48) \
+BACKEND_DIR=$PWD/../splitly E2E_PORT=18080 POSTGRES_PASSWORD=e2e JWT_SECRET=$(openssl rand -base64 48) \
   docker compose -p splitly-e2e -f .github/e2e/docker-compose.yml up -d --build --wait
 flutter test integration_test/smoke_test.dart -d <устройство> --dart-define=API_BASE=http://10.0.2.2:18080
 docker compose -p splitly-e2e -f .github/e2e/docker-compose.yml down
