@@ -1,4 +1,4 @@
-# Доводит материалы для Google Play: скриншоты до 2:1, иконка 512, баннер 1024×500.
+# Доводит материалы для Google Play: скриншоты до 9:16, иконка 512, баннер 1024×500.
 # Нужен Pillow; шрифт баннера — системный SF (macOS).
 #   python3 tool/store_assets.py . "Делим счёт и считаем, кто кому должен" ru
 #   python3 tool/store_assets.py . "Split the bill, see who owes whom" en
@@ -7,14 +7,16 @@ from PIL import Image, ImageDraw, ImageFont
 root = sys.argv[1]
 BG = (15, 17, 21)
 
-# Скриншоты: Play не принимает стороны длиннее двух коротких — расширяем фоном
+# Скриншоты: Play принимает телефонные снимки только в пропорции ровно 9:16.
+# Современные телефоны вытянутее (19.5:9), поэтому расширяем снимок фоном по бокам.
 for f in glob.glob(f'{root}/store/screenshots/*.png'):
     im = Image.open(f).convert('RGB')
     w, h = im.size
-    if h > 2 * w:
-        nw = (h + 1) // 2
-        canvas = Image.new('RGB', (nw, h), BG)
-        canvas.paste(im, ((nw - w) // 2, 0))
+    nh = -(-max(h, w * 16 // 9) // 16) * 16   # кратно 16, чтобы 9:16 вышло точно
+    nw = nh * 9 // 16
+    if (nw, nh) != (w, h):
+        canvas = Image.new('RGB', (nw, nh), BG)
+        canvas.paste(im, ((nw - w) // 2, (nh - h) // 2))
         canvas.save(f)
 
 icon = Image.open(f'{root}/assets/icon/icon.png').convert('RGB')
